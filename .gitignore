@@ -1,0 +1,21 @@
+# macOS Finder metadata
+.DS_Store
+
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local dataset and private environment files
+creditcard.csv
+SUBMISSION_READINESS.md
+.env
+.env.*
+
+# Build outputs and distributable archives
+build/
+dist/
+*.app/
+*.zip

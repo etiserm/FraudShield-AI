@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101923" />
+    <meta name="description" content="A local educational prototype for credit card fraud detection." />
+    <title>FraudShield AI — Card Fraud Detection</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/script.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="FraudShield AI home">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <span>FraudShield <span class="brand-ai">AI</span></span>
+        </a>
+        <span class="local-badge"><span class="status-dot"></span> Runs on this Mac</span>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">VERITAS AI · PROJECT 4.2.2</p>
+            <h1>Spot suspicious<br /><span>card activity.</span></h1>
+            <p class="hero-description">
+              Review transaction records with a machine-learning model trained to flag patterns associated with card fraud.
+            </p>
+            <div class="hero-points" aria-label="Project safeguards">
+              <span><span class="check">✓</span> Public data</span>
+              <span><span class="check">✓</span> Time-based evaluation</span>
+              <span><span class="check">✓</span> Human review</span>
+            </div>
+          </div>
+          <aside class="model-card" aria-label="Model information">
+            <div class="model-card-top">
+              <span class="model-icon" aria-hidden="true">✳</span>
+              <span class="model-status status-loading">CHECKING MODEL</span>
+            </div>
+            <p class="model-name" id="model-name">Random Forest</p>
+            <p class="model-note" id="policy-description">Selected using validation data</p>
+            <div class="model-divider"></div>
+            <div class="threshold-line">
+              <span>Decision threshold</span>
+              <strong id="model-threshold">—</strong>
+            </div>
+            <p class="model-footnote">A score cutoff for review — not a fraud probability.</p>
+          </aside>
+        </section>
+
+        <section class="workspace" aria-labelledby="upload-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">TRANSACTION REVIEW</p>
+              <h2 id="upload-heading">Analyze a CSV file</h2>
+            </div>
+            <span class="step-label"><span>01</span> Upload · <span>02</span> Review</span>
+          </div>
+
+          <form id="upload-form">
+            <label class="dropzone" id="dropzone" for="csv-file">
+              <span class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" role="img" aria-label="">
+                  <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v4A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span class="dropzone-title" id="file-title">Drop your CSV here or <span>browse files</span></span>
+              <span class="dropzone-hint" id="file-hint">CSV · up to 180 MiB · up to 300,000 rows</span>
+              <input id="csv-file" name="file" type="file" accept=".csv,text/csv" required />
+            </label>
+
+            <div class="policy-control">
+              <label for="decision-policy">Review policy</label>
+              <select id="decision-policy" name="decision_policy" aria-describedby="policy-help">
+                <option value="f1_balanced">Balanced — maximize validation F1</option>
+                <option value="cost_10_to_1">Cost scenario — missed fraud costs 10× a review</option>
+              </select>
+              <p id="policy-help">The recall-focused policy uses an illustrative cost ratio, not an estimate of real bank losses.</p>
+            </div>
+
+            <div class="schema-note">
+              <span class="info-icon" aria-hidden="true">i</span>
+              <p><strong>Required:</strong> Time, V1–V28, Amount. An optional <code>Class</code> column is ignored.</p>
+            </div>
+
+            <div id="error-panel" class="error-panel" role="alert" hidden></div>
+
+            <button class="primary-button" id="analyze-button" type="submit" disabled>
+              <span class="button-label">Analyze transactions</span>
+              <span class="button-arrow" aria-hidden="true">→</span>
+            </button>
+          </form>
+
+          <section class="results" id="results" aria-live="polite" hidden>
+            <div class="results-heading">
+              <div>
+                <p class="eyebrow">ANALYSIS COMPLETE</p>
+                <h3>Review these model alerts</h3>
+              </div>
+              <button class="secondary-button" id="download-button" type="button">Download full results <span aria-hidden="true">↓</span></button>
+            </div>
+            <div class="metric-grid">
+              <article class="metric-card"><span>Transactions scored</span><strong id="total-count">—</strong></article>
+              <article class="metric-card alert-metric"><span>Flagged for review</span><strong id="flagged-count">—</strong></article>
+              <article class="metric-card"><span>Flag rate</span><strong id="flag-rate">—</strong></article>
+            </div>
+            <p class="label-warning" id="label-warning" hidden>The uploaded <code>Class</code> labels were ignored. Predictions used transaction features only.</p>
+            <div class="preview-wrap">
+              <div class="preview-heading"><span>Preview</span><span>First 10 rows</span></div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Row</th><th>Fraud score</th><th>Threshold</th><th>Model label</th></tr></thead>
+                  <tbody id="preview-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <p class="results-note" id="results-note">A “Fraud” label is a model alert for human review, not a confirmed fraud finding. Scores are not calibrated probabilities.</p>
+          </section>
+        </section>
+
+        <section class="benchmark" aria-labelledby="benchmark-heading">
+          <div class="benchmark-copy">
+            <p class="eyebrow" id="benchmark-policy-label">BALANCED POLICY · HELD-OUT TEST PERIOD</p>
+            <h2 id="benchmark-heading">Measured before the demo.</h2>
+            <p id="benchmark-summary">On a later time period the model detected 39 of 52 fraud cases, with 5 false alerts. These results describe this dataset only.</p>
+          </div>
+          <div class="benchmark-stats">
+            <div><span>Precision</span><strong id="benchmark-precision">88.6%</strong></div>
+            <div><span>Recall</span><strong id="benchmark-recall">75.0%</strong></div>
+            <div><span>F1-score</span><strong id="benchmark-f1">81.3%</strong></div>
+            <div><span>PR-AUC</span><strong id="benchmark-pr-auc">0.773</strong></div>
+            <div><span>ROC-AUC</span><strong id="benchmark-roc-auc">0.925</strong></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p><strong>Educational prototype.</strong> Not for real payment decisions. Use public or synthetic data only.</p>
+        <span>FraudShield AI · Local demo</span>
+      </footer>
+    </div>
+  </body>
+</html>

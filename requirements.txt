@@ -1,0 +1,9 @@
+# Keep scikit-learn aligned with the version used to train the exported model.
+streamlit>=1.40,<2.0
+scikit-learn==1.6.1
+numpy==2.4.6
+pandas==2.2.3
+joblib>=1.4,<2.0
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+python-multipart>=0.0.10,<1.0
